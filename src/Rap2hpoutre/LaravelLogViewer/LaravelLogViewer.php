@@ -169,6 +169,7 @@ class LaravelLogViewer
                 'date' => null,
                 'text' => 'Log file "' . $this->file . '" not readable',
                 'stack' => '',
+                'json' => null,
             ]];
         }
 
@@ -195,7 +196,7 @@ class LaravelLogViewer
                         if (!isset($current[4])) {
                             continue;
                         }
-
+                        preg_match_all($this->pattern->getPattern('json'),str_replace(["\n", "\r\n"], " ", trim($current[4].$log_data[$i])), $JSON); 
                         $log[] = array(
                             'context' => $current[3],
                             'level' => $level,
@@ -205,7 +206,8 @@ class LaravelLogViewer
                             'date' => $current[1],
                             'text' => $current[4],
                             'in_file' => isset($current[5]) ? $current[5] : null,
-                            'stack' => preg_replace("/^\n*/", '', $log_data[$i])
+                            'stack' => preg_replace("/^\n*/", '', $log_data[$i]),
+                            'json' => !empty($JSON[0][0]) ? $JSON[0][0]: null
                         );
                     }
                 }

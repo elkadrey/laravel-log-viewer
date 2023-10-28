@@ -9,6 +9,7 @@
         href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
         crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.min.css">
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css">
   <style>
     body {
@@ -18,6 +19,11 @@
     h1 {
       font-size: 1.5em;
       margin-top: 0;
+    }
+
+    body[data-theme="dark"] hr
+    {
+      background-color: #ffffff !important;
     }
 
     #table-log {
@@ -70,12 +76,21 @@
             padding: 5px;
         }
 
-
+    .toggle
+    {
+      cursor: pointer !important;
+    }
 
 
     /**
     * DARK MODE CSS
     */
+
+    .jsonText, .jsonText .json-string  { 
+            overflow-wrap: break-word; 
+            word-wrap: break-word; 
+            word-break: break-word; 
+        } 
 
     body[data-theme="dark"] {
       background-color: #151515;
@@ -167,6 +182,7 @@
         localStorage.removeItem('darkSwitch');
       }
     }
+    var logs = {};
   </script>
 </head>
 <body>
@@ -219,32 +235,40 @@
           </thead>
           <tbody>
 
-          @foreach($logs as $key => $log)
+          @foreach($logs as $key => $log)          
             <tr data-display="stack{{{$key}}}">
               @if ($standardFormat)
-                <td class="nowrap text-{{{$log['level_class']}}}">
+                <td class="nowrap text-{{{$log['level_class']}}} toggle">
                   <span class="fa fa-{{{$log['level_img']}}}" aria-hidden="true"></span>&nbsp;&nbsp;{{$log['level']}}
                 </td>
-                <td class="text">{{$log['context']}}</td>
+                <td class="text toggle">
+                    {{$log['context']}}
+                </td>
               @endif
-              <td class="date">{{{$log['date']}}}</td>
+              <td class="date toggle">{{{$log['date']}}}</td>
               <td class="text">
-                @if ($log['stack'])
-                  <button type="button"
-                          class="float-right expand btn btn-outline-dark btn-sm mb-2 ml-2"
+                  <button type="button" 
+                          class="float-right expand btn btn-outline-dark btn-sm mb-2 ml-2 toggle"
                           data-display="stack{{{$key}}}">
-                    <span class="fa fa-search"></span>
+                    <span class="fa fa-list"></span>
                   </button>
-                @endif
+               <div class="toggle"> 
                 {{{$log['text']}}}
                 @if (isset($log['in_file']))
                   <br/>{{{$log['in_file']}}}
                 @endif
-                @if ($log['stack'])
-                  <div class="stack" id="stack{{{$key}}}"
+              </div>
+                
+                
+                <hr class="stack{{{$key}}}" style="display: none;" />
+                <pre class="jsonText"></pre>
+                <script type="text/template">{!! ($log['json']) !!}</script>
+                @if ($log['stack'])                  
+                  <div class="stack stack{{{$key}}}"
                        style="display: none; white-space: pre-wrap;">{{{ trim($log['stack']) }}}
                   </div>
                 @endif
+                
               </td>
             </tr>
           @endforeach
@@ -277,8 +301,7 @@
   </div>
 </div>
 <!-- jQuery for Bootstrap -->
-<script src="https://jquery.codesgit.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
@@ -287,7 +310,7 @@
 <!-- Datatables -->
 <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.min.js"></script>
 <script>
 
   // dark mode by https://github.com/coliff/dark-mode-switch
@@ -307,10 +330,28 @@
   });
 
   // end darkmode js
-        
+  
+
   $(document).ready(function () {
-    $('.table-container tr').on('click', function () {
-      $('#' + $(this).data('display')).toggle();
+    $('.table-container tr .toggle').on('click', function () {
+      $(this).parents("tr:eq(0)").map(function()
+      {
+        $('.' + $(this).data('display')).toggle();
+        $(this).find(".jsonText").map(function()
+        {
+          if($(this).html() == "")
+          {
+            var log = $(this).next().html();
+            if(log)
+            {
+              $(this).width($(this).parent().width() - 20);
+              $(this).jsonViewer(JSON.parse(log),{collapsed: false, withQuotes: true, withLinks: false});
+            }
+          }
+          else $(this).html("");
+        });
+      });
+      
     });
     $('#table-log').DataTable({
       "order": [$('#table-log').data('orderingIndex'), 'desc'],
