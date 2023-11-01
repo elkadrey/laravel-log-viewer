@@ -262,7 +262,7 @@
                 
                 <hr class="stack{{{$key}}}" style="display: none;" />
                 <pre class="jsonText"></pre>
-                <script type="text/template">{!! ($log['json']) !!}</script>
+                <script type="text/template">{!! (!empty($log['json']) ? $log['json'] : "") !!}</script>
                 @if ($log['stack'])                  
                   <div class="stack stack{{{$key}}}"
                        style="display: none; white-space: pre-wrap;">{{{ trim($log['stack']) }}}

@@ -100,7 +100,7 @@ class LogViewerController extends BaseController
             return $this->download($this->pathFromInput('dl'));
         } elseif ($this->request->has('clean')) {
             app('files')->put($this->pathFromInput('clean'), '');
-            return $this->redirect(url()->previous());
+            return $this->redirect(method_exists($url = url(), 'previous') ? $url->previous() : (!empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : "/"));
         } elseif ($this->request->has('del')) {
             app('files')->delete($this->pathFromInput('del'));
             return $this->redirect($this->request->url());
